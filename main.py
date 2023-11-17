@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
+from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal
 from entities.Animal.service import AnimalService
 from db.base import get_session, init_models
@@ -39,13 +40,17 @@ async def get_animal_by_id(animal_id: int, session: AsyncSession = Depends(get_s
 
 
 @app.post('/animals')
-async def insert_animal(session: AsyncSession = Depends(get_session)):
-    ...
+async def insert_animal(animal: AnimalDTO, session: AsyncSession = Depends(get_session)):
+    res = await animalService.insert(session, animal)
+    if res is None:
+        raise HTTPException(409, f'animal already exists')
+    return res
 
 
-@app.delete('/animals')
-async def delete_animal(session: AsyncSession = Depends(get_session)):
-    ...
+@app.delete('/animals/{animal_id}')
+async def delete_animal(animal_id: int, session: AsyncSession = Depends(get_session)):
+    await animalService.delete(session, animal_id)
+    JSONResponse({})
 
 
 @app.get('/orders')
