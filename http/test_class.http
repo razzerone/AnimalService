@@ -1,0 +1,24 @@
+###class service get
+GET http://{{host}}/classes
+Accept: application/json
+
+###class service get by id
+GET http://{{host}}/classes/5
+Accept: application/json
+
+###class service insert
+POST http://{{host}}/classes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###class service delete
+DELETE http://{{host}}/classes/9
+Authorization: Bearer {{token}}
+
+
+
+

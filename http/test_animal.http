@@ -1,0 +1,43 @@
+###animal service get ok
+GET http://127.0.0.1:8000/animals
+Accept: application/json
+
+> {%
+    client.test("animals endpoint test", () => {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###animal service get by id ok
+GET http://127.0.0.1:8000/animals/2
+Accept: application/json
+
+> {%
+    client.test("animals by id endpoint test good", () => {
+        client.assert(response.status === 200, "Response status is not 200");
+    });
+%}
+
+###animal service get by id not found
+GET http://127.0.0.1:8000/animals/20000
+Accept: application/json
+
+> {%
+    client.test("animals by id endpoint test bad", () => {
+        client.assert(response.status === 404, "Response status is not 404");
+    });
+%}
+
+###animal service insert
+POST http://127.0.0.1:8000/animals
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Европейский лесной кот",
+  "order_id": 1
+}
+
+###animal service delete
+DELETE http://127.0.0.1:8000/animals/9
+Authorization: Bearer {{token}}

@@ -1,0 +1,21 @@
+###order service get
+GET http://127.0.0.1:8000/orders/3
+Accept: application/json
+
+###order service get by id
+GET http://127.0.0.1:8000/orders
+Accept: application/json
+
+###order service insert
+POST http://127.0.0.1:8000/orders
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Хищные",
+  "class_id": 10
+}
+
+###order service delete
+DELETE http://127.0.0.1:8000/orders/9
+Authorization: Bearer {{token}}

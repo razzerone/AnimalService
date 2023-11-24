@@ -186,4 +186,7 @@ fabric.properties
 .idea/*
 
 test.py
-test_main.http
+
+*.pem
+*.pub
+*.jwt

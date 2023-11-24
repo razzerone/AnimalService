@@ -1,0 +1,53 @@
+###ok
+POST http://{{host}}/classes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###witout token
+POST http://{{host}}/classes
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###invalid token
+POST http://{{host}}/classes
+Authorization: Bearer {{token}}111
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###invalid decodable token
+POST http://{{host}}/classes
+Authorization: Bearer {{token}}1111
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###invalid type
+POST http://{{host}}/classes
+Authorization: Basic 123:123
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+
+###expired token
+POST http://{{host}}/classes
+Authorization: Bearer {{expired_token}}
+Content-Type: application/json
+
+{
+  "name": "Млекопитающие"
+}
+

@@ -1,7 +1,12 @@
-from fastapi import FastAPI, Depends, HTTPException
+import re
+
+from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
+from auth.auth import Auth
+from auth.key_service.api.api import APIKeyService
+from auth.key_service.exceptions import InvalidToken
 from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal
 from entities.Animal.service import AnimalService
@@ -18,6 +23,30 @@ app = FastAPI()
 classService = ClassService()
 orderService = OrderService(classService)
 animalService = AnimalService(orderService)
+
+keyService = APIKeyService('http://localhost:8080')
+auth = Auth(keyService)
+
+jwt_header_regexp = re.compile(r'^Bearer ([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+)$')
+
+
+@app.middleware("http")
+async def add_process_time_header(request: Request, call_next):
+    if request.method in {'POST', 'DELETE'}:
+        try:
+            matches = jwt_header_regexp.fullmatch(request.headers['authorization'])
+            token = matches[1]
+            msg = await auth.decode(token)
+        except KeyError as e:
+            return JSONResponse(status_code=401, content={'message': 'authorization required'})
+        except InvalidToken as e:
+            return JSONResponse(status_code=403, content={'message': 'forbidden'})
+        except TypeError as e:
+            return JSONResponse(status_code=400, content={'message': 'invalid authorization type'})
+
+    response = await call_next(request)
+
+    return response
 
 
 @app.on_event('startup')
@@ -107,4 +136,3 @@ async def insert_class(class_: ClassDTO, session: AsyncSession = Depends(get_ses
 async def delete_class(class_id: int, session: AsyncSession = Depends(get_session)):
     await classService.delete(session, class_id)
     return JSONResponse({})
-
