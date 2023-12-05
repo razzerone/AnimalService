@@ -4,6 +4,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
+import config
 from auth.auth import Auth
 from auth.key_service.api.api import APIKeyService
 from auth.key_service.exceptions import InvalidToken
@@ -18,13 +19,13 @@ from entities.Order.dto import OrderDTO
 from entities.Order.model import Order
 from entities.Order.service import OrderService
 
-app = FastAPI()
+app = FastAPI(debug=config.DEBUG)
 
 classService = ClassService()
 orderService = OrderService(classService)
 animalService = AnimalService(orderService)
 
-keyService = APIKeyService('http://localhost:8080')
+keyService = APIKeyService(config.KEY_SERVICE_URL)
 auth = Auth(keyService)
 
 jwt_header_regexp = re.compile(r'^Bearer ([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+)$')

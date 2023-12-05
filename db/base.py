@@ -6,12 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 
+import config
+
 DATABASE_URL = \
     "mysql+aiomysql://razzerone:rbrbkk02@192.168.1.104/test?charset=utf8mb4"
 
 Base = declarative_base()
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL, echo=config.DEBUG)
 
 async_session_factory = sessionmaker(engine, class_=AsyncSession)
 
