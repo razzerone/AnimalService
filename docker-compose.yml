@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   api:
-    container_name: animal-service/api
+    container_name: api
     build: ./
     restart: unless-stopped
     env_file:
@@ -11,7 +11,7 @@ services:
       - db
 
   db:
-    container_name: animal-service/mysql
+    container_name: mysql
     image: mysql:8.0.27
     restart: unless-stopped
     env_file:
