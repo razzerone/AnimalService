@@ -11,6 +11,9 @@ from config import DB_USER, DB_HOST, DB_PORT, DB_NAME, DB_PASSWORD, DEBUG
 DATABASE_URL = \
     f'mysql+aiomysql://f{DB_USER}:f{DB_PASSWORD}@f{DB_HOST}:f{DB_PORT}/f{DB_NAME}?charset=utf8mb4'
 
+if DEBUG:
+    print(f'{DATABASE_URL=}')
+
 Base = declarative_base()
 
 engine = create_async_engine(DATABASE_URL, echo=DEBUG)
