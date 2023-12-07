@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from config import DB_USER, DB_HOST, DB_PORT, DB_NAME, DB_PASSWORD, DEBUG
 
 DATABASE_URL = \
-    f'mysql+aiomysql://f{DB_USER}:f{DB_PASSWORD}@f{DB_HOST}:f{DB_PORT}/f{DB_NAME}?charset=utf8mb4'
+    f'mysql+aiomysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4'
 
 if DEBUG:
     print(f'{DATABASE_URL=}')
