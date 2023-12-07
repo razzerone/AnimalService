@@ -12,8 +12,8 @@ from jwt.utils import get_int_from_datetime
 instance = JWT()
 
 message = {
-    'iss': 'https://example.com/',
-    'sub': 'yosida95',
+    'iss': 'animal-service',
+    'sub': 'razzerone',
     'iat': get_int_from_datetime(datetime.now(timezone.utc)),
     'exp': get_int_from_datetime(
         datetime.now(timezone.utc) + timedelta(days=30)),

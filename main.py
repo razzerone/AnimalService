@@ -6,7 +6,6 @@ from starlette.responses import JSONResponse
 
 import config
 from auth.auth import Auth
-from auth.key_service.api.api import APIKeyService
 from auth.key_service.exceptions import InvalidToken
 from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal
@@ -25,7 +24,14 @@ classService = ClassService()
 orderService = OrderService(classService)
 animalService = AnimalService(orderService)
 
-keyService = APIKeyService(config.KEY_SERVICE_URL)
+if config.USE_OPEN_KEY_FILE:
+    if config.DEBUG:
+        print('use local key service')
+    from auth.key_service.file.service import LocalKeyService
+    keyService = LocalKeyService()
+else:
+    from auth.key_service.api.api import APIKeyService
+    keyService = APIKeyService(config.KEY_SERVICE_URL)
 auth = Auth(keyService)
 
 jwt_header_regexp = re.compile(r'^Bearer ([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+)$')
