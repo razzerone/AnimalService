@@ -5,5 +5,5 @@ from entities.dto import DTO
 
 
 class AnimalDTO(DTO):
-    name: Field(str, max_length=50)
+    name: str = Field(max_length=50)
     order_id: int

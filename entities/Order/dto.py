@@ -5,5 +5,5 @@ from entities.dto import DTO
 
 
 class OrderDTO(DTO):
-    name: Field(str, max_length=50)
+    name: str = Field(max_length=50)
     class_id: int
