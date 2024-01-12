@@ -6,6 +6,7 @@ from starlette.responses import JSONResponse
 
 import config
 from auth.auth import Auth
+from auth.bearer import JWTBearer
 from auth.key_service.exceptions import InvalidToken
 from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal
@@ -28,32 +29,22 @@ if config.USE_OPEN_KEY_FILE:
     if config.DEBUG:
         print('use local key service')
     from auth.key_service.file.service import LocalKeyService
+
     keyService = LocalKeyService()
 else:
     from auth.key_service.api.api import APIKeyService
+
     keyService = APIKeyService(config.KEY_SERVICE_URL)
+
 auth = Auth(keyService)
 
-jwt_header_regexp = re.compile(r'^Bearer ([a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+\.[a-zA-Z0-9-_]+)$')
+
+def auth_post(path: str):
+    return app.post(path, dependencies=[Depends(JWTBearer(auth))])
 
 
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    if request.method in {'POST', 'DELETE'}:
-        try:
-            matches = jwt_header_regexp.fullmatch(request.headers['authorization'])
-            token = matches[1]
-            msg = await auth.decode(token)
-        except KeyError as e:
-            return JSONResponse(status_code=401, content={'message': 'authorization required'})
-        except InvalidToken as e:
-            return JSONResponse(status_code=403, content={'message': 'forbidden'})
-        except TypeError as e:
-            return JSONResponse(status_code=400, content={'message': 'invalid authorization type'})
-
-    response = await call_next(request)
-
-    return response
+def auth_delete(path: str):
+    return app.delete(path, dependencies=[Depends(JWTBearer(auth))])
 
 
 @app.on_event('startup')
@@ -75,7 +66,7 @@ async def get_animal_by_id(animal_id: int, session: AsyncSession = Depends(get_s
     return res
 
 
-@app.post('/animals')
+@auth_post('/animals')
 async def insert_animal(animal: AnimalDTO, session: AsyncSession = Depends(get_session)):
     res = await animalService.insert(session, animal)
     if res is None:
@@ -83,7 +74,7 @@ async def insert_animal(animal: AnimalDTO, session: AsyncSession = Depends(get_s
     return res
 
 
-@app.delete('/animals/{animal_id}')
+@auth_delete('/animals/{animal_id}')
 async def delete_animal(animal_id: int, session: AsyncSession = Depends(get_session)):
     await animalService.delete(session, animal_id)
     JSONResponse({})
@@ -103,7 +94,7 @@ async def get_order_by_id(order_id: int, session: AsyncSession = Depends(get_ses
     return res
 
 
-@app.post('/orders')
+@auth_post('/orders')
 async def insert_order(order: OrderDTO, session: AsyncSession = Depends(get_session)):
     res = await orderService.insert(session, order)
     if res is None:
@@ -111,7 +102,7 @@ async def insert_order(order: OrderDTO, session: AsyncSession = Depends(get_sess
     return res
 
 
-@app.delete('/orders/{order_id}')
+@auth_delete('/orders/{order_id}')
 async def delete_order(order_id: int, session: AsyncSession = Depends(get_session)):
     await orderService.delete(session, order_id)
     JSONResponse({})
@@ -131,7 +122,7 @@ async def get_class_by_id(class_id: int, session: AsyncSession = Depends(get_ses
     return res
 
 
-@app.post('/classes')
+@auth_post('/classes')
 async def insert_class(class_: ClassDTO, session: AsyncSession = Depends(get_session)) -> Class:
     res = await classService.insert(session, class_)
     if res is None:
@@ -139,7 +130,7 @@ async def insert_class(class_: ClassDTO, session: AsyncSession = Depends(get_ses
     return res
 
 
-@app.delete('/classes/{class_id}')
+@auth_delete('/classes/{class_id}')
 async def delete_class(class_id: int, session: AsyncSession = Depends(get_session)):
     await classService.delete(session, class_id)
     return JSONResponse({})
