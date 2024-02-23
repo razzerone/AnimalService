@@ -3,52 +3,64 @@ from sqlalchemy import select, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from db.models import Class, Order, Animal
+from db.models import Class, Order, Animal, Family
 from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal as AnimalModel
 from entities.Class.dto import ClassDTO
+from entities.Family.service import FamilyService
+from entities.Family.model import Family as FamilyModel
 from entities.Order.model import Order as OrderModel
 from entities.Class.model import Class as ClassModel
-from entities.Order.service import OrderService
 from entities.service import Service
 
 
 class AnimalService(Service[ClassModel, ClassDTO]):
-    def __init__(self, order_service: OrderService):
-        self._order_service = order_service
+    def __init__(self, family_service: FamilyService):
+        self._family_service = family_service
 
         self._animals_subq = (
-            select(Animal.id, Animal.name, Order.id, Order.name, Class.id, Class.name)
-            .join_from(Animal, Order)
+            select(
+                Animal.id, Animal.name, Family.id, Family.name, Order.id, Order.name, Class.id, Class.name
+            )
+            .join_from(Animal, Family)
+            .join_from(Family, Order)
             .join_from(Order, Class)
             .subquery()
         )
 
         self._animal_alias = aliased(Animal, self._animals_subq, name="animal")
+        self._family_alias = aliased(Family, self._animals_subq, name="family")
         self._order_alias = aliased(Order, self._animals_subq, name="order")
         self._class_alias = aliased(Class, self._animals_subq, name="class_")
 
     async def get(self, session: AsyncSession) -> list[AnimalModel]:
         res = (await session.execute(
-            select(self._animal_alias, self._order_alias, self._class_alias)
+            select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias)
         ))
 
         return [AnimalModel(
             id=row.animal.id,
             name=row.animal.name,
-            order=OrderModel(
-                id=row.order.id,
-                name=row.order.name,
-                class_=ClassModel(
-                    id=row.class_.id,
-                    name=row.class_.name
+            family=FamilyModel(
+                id=row.family.id,
+                name=row.family.name,
+                order=OrderModel(
+                    id=row.order.id,
+                    name=row.order.name,
+                    class_=ClassModel(
+                        id=row.class_.id,
+                        name=row.class_.name
+                    )
                 )
             )
         ) for row in res]
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> AnimalModel | None:
         row = (await session.execute(
-            select(self._animal_alias, self._order_alias, self._class_alias).where(self._animal_alias.id == id_)
+            select(
+                self._animal_alias, self._family_alias, self._order_alias, self._class_alias
+            )
+            .where(self._animal_alias.id == id_)
         )).first()
 
         if row is None:
@@ -56,12 +68,16 @@ class AnimalService(Service[ClassModel, ClassDTO]):
         return AnimalModel(
             id=row.animal.id,
             name=row.animal.name,
-            order=OrderModel(
-                id=row.order.id,
-                name=row.order.name,
-                class_=ClassModel(
-                    id=row.class_.id,
-                    name=row.class_.name
+            family=FamilyModel(
+                id=row.family.id,
+                name=row.family.name,
+                order=OrderModel(
+                    id=row.order.id,
+                    name=row.order.name,
+                    class_=ClassModel(
+                        id=row.class_.id,
+                        name=row.class_.name
+                    )
                 )
             )
         )
@@ -69,16 +85,16 @@ class AnimalService(Service[ClassModel, ClassDTO]):
     async def insert(self, session: AsyncSession, item: AnimalDTO):
         try:
             id_ = (await session.execute(
-                insert(Animal).values(name=item.name, orderId=item.order_id)
+                insert(Animal).values(name=item.name, orderId=item.family_id)
             )).lastrowid
 
-            order = await AnimalService.check_insert(
+            family = await AnimalService.check_insert(
                 id_,
-                self._order_service.get_by_id(session, item.order_id),
+                self._family_service.get_by_id(session, item.family_id),
                 session.commit()
             )
 
-            return AnimalModel(id=id_, name=item.name, order=order)
+            return AnimalModel(id=id_, name=item.name, family=family)
 
         except IntegrityError as ex:
             await session.rollback()

@@ -1,10 +1,10 @@
 from pydantic import Field
 
-from entities.Family.model import Family
+from entities.Order.model import Order
 from entities.model import Model
 
 
-class Animal(Model):
+class Family(Model):
     id: int
     name: str = Field(max_length=50)
-    family: Family
+    order: Order

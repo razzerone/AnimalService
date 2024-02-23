@@ -19,9 +19,17 @@ class Order(Base):
     name = Column(String(50), unique=True)
 
 
+class Family(Base):
+    __tablename__ = 'families'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    orderId = Column(Integer, ForeignKey('orders.id'))
+    name = Column(String(50), unique=True)
+
+
 class Animal(Base):
     __tablename__ = 'animals'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    orderId = Column(Integer, ForeignKey('orders.id'))
+    familyId = Column(Integer, ForeignKey('families.id'))
     name = Column(String(50), unique=True)
