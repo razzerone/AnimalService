@@ -9,18 +9,16 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
   # Poetry's configuration:
-  POETRY_NO_INTERACTION=1 \
-  POETRY_VIRTUALENVS_CREATE=false \
-  POETRY_CACHE_DIR='/var/cache/pypoetry' \
-  POETRY_HOME='/usr/local' \
   POETRY_VERSION=1.7.1
 
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN python -m pip install --no-cache-dir poetry==$POETRY_VERSION \
+    && poetry config virtualenvs.create false
 
 WORKDIR /app/
+
 COPY ["./poetry.lock", "./pyproject.toml", "./"]
 
-RUN /usr/local/poetry install --no-interaction --no-ansi
+RUN poetry install --no-interaction --no-ansi
 
 COPY . /app/
 
