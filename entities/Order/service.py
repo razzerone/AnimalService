@@ -11,7 +11,7 @@ from entities.Order.model import Order as OrderModel
 from entities.service import Service
 
 
-class OrderService(Service[OrderModel, OrderDTO]):
+class OrderService(Service[OrderModel, OrderDTO, int]):
     def __init__(self, class_service: ClassService):
         self._class_service = class_service
 

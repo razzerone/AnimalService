@@ -14,7 +14,7 @@ from entities.Class.model import Class as ClassModel
 from entities.service import Service
 
 
-class AnimalService(Service[ClassModel, ClassDTO]):
+class AnimalService(Service[ClassModel, ClassDTO, int]):
     def __init__(self, family_service: FamilyService):
         self._family_service = family_service
 

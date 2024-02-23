@@ -8,7 +8,7 @@ from entities.Class.model import Class as ClassModel
 from entities.service import Service
 
 
-class ClassService(Service[ClassModel, ClassDTO]):
+class ClassService(Service[ClassModel, ClassDTO, int]):
     async def get(self, session: AsyncSession) -> list[ClassModel]:
         res = (await session.scalars(select(Class))).all()
         return [ClassModel(id=e.id, name=e.name) for e in res]

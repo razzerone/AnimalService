@@ -12,7 +12,7 @@ from entities.Order.service import OrderService
 from entities.service import Service
 
 
-class FamilyService(Service[FamilyModel, FamilyDTO]):
+class FamilyService(Service[FamilyModel, FamilyDTO, int]):
     def __init__(self, order_service: OrderService):
         self._order_service = order_service
 
