@@ -17,8 +17,8 @@ ENV PYTHONFAULTHANDLER=1 \
 
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-WORKDIR /app
-COPY poetry.lock pyproject.toml /app/
+WORKDIR /app/
+COPY ./pyproject.toml ./poetry.lock /app/
 
 RUN poetry install --no-interaction --no-ansi
 
