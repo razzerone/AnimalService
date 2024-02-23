@@ -15,6 +15,9 @@ from db.base import get_session, init_models
 from entities.Class.dto import ClassDTO
 from entities.Class.model import Class
 from entities.Class.service import ClassService
+from entities.Family.dto import FamilyDTO
+from entities.Family.model import Family
+from entities.Family.service import FamilyService
 from entities.Order.dto import OrderDTO
 from entities.Order.model import Order
 from entities.Order.service import OrderService
@@ -23,7 +26,8 @@ app = FastAPI(debug=config.DEBUG)
 
 classService = ClassService()
 orderService = OrderService(classService)
-animalService = AnimalService(orderService)
+familyService = FamilyService(orderService)
+animalService = AnimalService(familyService)
 
 if config.USE_OPEN_KEY_FILE:
     if config.DEBUG:
@@ -77,7 +81,35 @@ async def insert_animal(animal: AnimalDTO, session: AsyncSession = Depends(get_s
 @auth_delete('/animals/{animal_id}')
 async def delete_animal(animal_id: int, session: AsyncSession = Depends(get_session)):
     await animalService.delete(session, animal_id)
-    JSONResponse({})
+    return JSONResponse({})
+
+
+@app.get('/families')
+async def get_families(session: AsyncSession = Depends(get_session)) -> list[Family]:
+    res = await familyService.get(session)
+    return res
+
+
+@app.get('/families/{family_id}')
+async def get_family_by_id(family_id: int, session: AsyncSession = Depends(get_session)) -> Family:
+    res = await familyService.get_by_id(session, family_id)
+    if res is None:
+        raise HTTPException(404, f'family with id={family_id} not found')
+    return res
+
+
+@auth_post('/families')
+async def insert_family(family: FamilyDTO, session: AsyncSession = Depends(get_session)):
+    res = await familyService.insert(session, family)
+    if res is None:
+        raise HTTPException(409, f'family already exists')
+    return res
+
+
+@auth_delete('/families/{family_id}')
+async def delete_family(family_id: int, session: AsyncSession = Depends(get_session)):
+    await familyService.delete(session, family_id)
+    return JSONResponse({})
 
 
 @app.get('/orders')
@@ -105,7 +137,7 @@ async def insert_order(order: OrderDTO, session: AsyncSession = Depends(get_sess
 @auth_delete('/orders/{order_id}')
 async def delete_order(order_id: int, session: AsyncSession = Depends(get_session)):
     await orderService.delete(session, order_id)
-    JSONResponse({})
+    return JSONResponse({})
 
 
 @app.get('/classes')
