@@ -1,9 +1,11 @@
+from functools import reduce
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from db.models import Class, Order, Animal, Family
+from db.models import Class, Order, Animal, Family, Parameter
 from entities.Animal.dto import AnimalDTO
 from entities.Animal.model import Animal as AnimalModel
 from entities.Class.dto import ClassDTO
@@ -20,11 +22,13 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
 
         self._animals_subq = (
             select(
-                Animal.id, Animal.name, Family.id, Family.name, Order.id, Order.name, Class.id, Class.name
+                Animal.id, Animal.name, Family.id, Family.name, Order.id, Order.name, Class.id, Class.name,
+                Parameter.id, Parameter.key, Parameter.value
             )
             .join_from(Animal, Family)
             .join_from(Family, Order)
             .join_from(Order, Class)
+            .outerjoin_from(Animal, Parameter)
             .subquery()
         )
 
@@ -32,55 +36,64 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
         self._family_alias = aliased(Family, self._animals_subq, name="family")
         self._order_alias = aliased(Order, self._animals_subq, name="order")
         self._class_alias = aliased(Class, self._animals_subq, name="class_")
+        self._parameter_alias = aliased(Parameter, self._animals_subq, name="parameter")
 
     async def get(self, session: AsyncSession) -> list[AnimalModel]:
         res = (await session.execute(
-            select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias)
-        ))
+            select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias)
+            .group_by(self._animal_alias.id)
+        )).all()
 
-        return [AnimalModel(
-            id=row.animal.id,
-            name=row.animal.name,
-            family=FamilyModel(
-                id=row.family.id,
-                name=row.family.name,
-                order=OrderModel(
-                    id=row.order.id,
-                    name=row.order.name,
-                    class_=ClassModel(
-                        id=row.class_.id,
-                        name=row.class_.name
-                    )
-                )
-            )
-        ) for row in res]
+        return fold_animal_list_parameters(res)
+
+        # return [AnimalModel(
+        #     id=row.animal.id,
+        #     name=row.animal.name,
+        #     family=FamilyModel(
+        #         id=row.family.id,
+        #         name=row.family.name,
+        #         order=OrderModel(
+        #             id=row.order.id,
+        #             name=row.order.name,
+        #             class_=ClassModel(
+        #                 id=row.class_.id,
+        #                 name=row.class_.name
+        #             )
+        #         )
+        #     )
+        # ) for row in res]
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> AnimalModel | None:
-        row = (await session.execute(
+        res = (await session.execute(
             select(
-                self._animal_alias, self._family_alias, self._order_alias, self._class_alias
+                self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias
             )
             .where(self._animal_alias.id == id_)
-        )).first()
+        )).all()
 
-        if row is None:
+        if len(res) == 0:
             return None
-        return AnimalModel(
-            id=row.animal.id,
-            name=row.animal.name,
-            family=FamilyModel(
-                id=row.family.id,
-                name=row.family.name,
-                order=OrderModel(
-                    id=row.order.id,
-                    name=row.order.name,
-                    class_=ClassModel(
-                        id=row.class_.id,
-                        name=row.class_.name
-                    )
-                )
-            )
-        )
+
+        return fold_animal_parameters(res)
+
+    # if row is None:
+    #     return None
+    # return AnimalModel(
+    #     id=row.animal.id,
+    #     name=row.animal.name,
+    #     family=FamilyModel(
+    #         id=row.family.id,
+    #         name=row.family.name,
+    #         order=OrderModel(
+    #             id=row.order.id,
+    #             name=row.order.name,
+    #             class_=ClassModel(
+    #                 id=row.class_.id,
+    #                 name=row.class_.name
+    #             )
+    #         )
+    #     )
+    # )
 
     async def insert(self, session: AsyncSession, item: AnimalDTO):
         try:
@@ -103,3 +116,52 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
     async def delete(self, session: AsyncSession, id_: int) -> None:
         (await session.execute(delete(Animal).where(Animal.id == id_)))
         await session.commit()
+
+
+def fold_animal_parameters(rows) -> AnimalModel:
+    animal = _animal_from_row(rows[0])
+    for row in rows[1:]:
+        animal.parameters.append(_parameter_from_row(row))
+
+    return animal
+
+
+def fold_animal_list_parameters(rows) -> list[AnimalModel]:
+    return reduce(_product_animal_list, rows, [])
+
+
+def _product_animal_list(acc: list[AnimalModel], row) -> list[AnimalModel]:
+    if len(acc) == 0 or row.animal.id != acc[-1].id:
+        acc.append(_animal_from_row(row))
+        return acc
+
+    acc[-1].parameters.append(_parameter_from_row(row))
+    return acc
+
+
+def _animal_from_row(row) -> AnimalModel:
+    return AnimalModel(
+        id=row.animal.id,
+        name=row.animal.name,
+        parameters=[] if row.parameter.id is None else [_parameter_from_row(row)],
+        family=FamilyModel(
+            id=row.family.id,
+            name=row.family.name,
+            order=OrderModel(
+                id=row.order.id,
+                name=row.order.name,
+                class_=ClassModel(
+                    id=row.class_.id,
+                    name=row.class_.name
+                )
+            )
+        )
+    )
+
+
+def _parameter_from_row(row) -> Parameter:
+    return Parameter(
+        id=row.parameter.id,
+        key=row.parameter.key,
+        value=row.parameter.value
+    )
