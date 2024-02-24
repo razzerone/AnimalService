@@ -88,13 +88,13 @@ async def delete_animal(animal_id: int, session: AsyncSession = Depends(get_sess
     return JSONResponse({})
 
 
-@app.get('/animals/parameters')
+@app.get('/parameters')
 async def get_parameters(session: AsyncSession = Depends(get_session)) -> list[Parameter]:
     res = await parameterService.get(session)
     return res
 
 
-@app.get('/animals/parameters/{parameter_id}')
+@app.get('/parameters/{parameter_id}')
 async def get_parameter_by_id(parameter_id: int, session: AsyncSession = Depends(get_session)) -> Parameter:
     res = await parameterService.get_by_id(session, parameter_id)
     if res is None:
@@ -102,7 +102,7 @@ async def get_parameter_by_id(parameter_id: int, session: AsyncSession = Depends
     return res
 
 
-@auth_post('/animals/parameters')
+@auth_post('/parameters')
 async def insert_parameter(parameter: ParameterDTO, session: AsyncSession = Depends(get_session)):
     res = await parameterService.insert(session, parameter)
     if res is None:
@@ -110,7 +110,7 @@ async def insert_parameter(parameter: ParameterDTO, session: AsyncSession = Depe
     return res
 
 
-@auth_delete('/animals/parameters/{parameter_id}')
+@auth_delete('/parameters/{parameter_id}')
 async def delete_parameter(parameter_id: int, session: AsyncSession = Depends(get_session)):
     await parameterService.delete(session, parameter_id)
     return JSONResponse({})
