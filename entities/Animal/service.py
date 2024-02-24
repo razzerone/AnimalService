@@ -23,7 +23,8 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
 
         self._animals_subq = (
             select(
-                Animal.id, Animal.name, Family.id, Family.name, Order.id, Order.name, Class.id, Class.name,
+                Animal.id, Animal.name, Animal.description, Animal.environmentDescription, Animal.zooDescription,
+                Family.id, Family.name, Order.id, Order.name, Class.id, Class.name,
                 Parameter.id, Parameter.key, Parameter.value
             )
             .join_from(Animal, Family)
@@ -98,7 +99,13 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
     async def insert(self, session: AsyncSession, item: AnimalDTO):
         try:
             id_ = (await session.execute(
-                insert(Animal).values(name=item.name, familyId=item.family_id)
+                insert(Animal).values(
+                    name=item.name,
+                    familyId=item.family_id,
+                    description=item.description,
+                    environmentDescription=item.environment_description,
+                    zooDescription=item.zoo_description
+                )
             )).lastrowid
 
             family = await AnimalService.check_insert(
@@ -154,7 +161,11 @@ def _animal_from_row(row) -> AnimalModel:
                     name=row.class_.name
                 )
             )
-        )
+        ),
+        description=row.animal.description,
+        environment_description=row.animal.environmentDescription,
+        zoo_description=row.animal.zooDescription
+
     )
 
 

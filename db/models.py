@@ -33,6 +33,9 @@ class Animal(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     familyId = Column(Integer, ForeignKey('families.id'))
     name = Column(String(50), unique=True)
+    description = Column(String(512), default="")
+    environmentDescription = Column(String(512), default="")
+    zooDescription = Column(String(512), default="")
 
 
 class Parameter(Base):
