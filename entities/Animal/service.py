@@ -13,6 +13,7 @@ from entities.Family.service import FamilyService
 from entities.Family.model import Family as FamilyModel
 from entities.Order.model import Order as OrderModel
 from entities.Class.model import Class as ClassModel
+from entities.Parameter.model import Parameter as ParameterModel
 from entities.service import Service
 
 
@@ -41,7 +42,6 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
     async def get(self, session: AsyncSession) -> list[AnimalModel]:
         res = (await session.execute(
             select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias)
-            .group_by(self._animal_alias.id)
         )).all()
 
         return fold_animal_list_parameters(res)
@@ -98,7 +98,7 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
     async def insert(self, session: AsyncSession, item: AnimalDTO):
         try:
             id_ = (await session.execute(
-                insert(Animal).values(name=item.name, orderId=item.family_id)
+                insert(Animal).values(name=item.name, familyId=item.family_id)
             )).lastrowid
 
             family = await AnimalService.check_insert(
@@ -107,7 +107,7 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                 session.commit()
             )
 
-            return AnimalModel(id=id_, name=item.name, family=family)
+            return AnimalModel(id=id_, name=item.name, family=family, parameters=[])
 
         except IntegrityError as ex:
             await session.rollback()
@@ -127,15 +127,14 @@ def fold_animal_parameters(rows) -> AnimalModel:
 
 
 def fold_animal_list_parameters(rows) -> list[AnimalModel]:
-    return reduce(_product_animal_list, rows, [])
+    return list(reduce(_product_animal_list, rows, {}).values())
 
 
-def _product_animal_list(acc: list[AnimalModel], row) -> list[AnimalModel]:
-    if len(acc) == 0 or row.animal.id != acc[-1].id:
-        acc.append(_animal_from_row(row))
+def _product_animal_list(acc: dict[int, AnimalModel], row) -> dict[int, AnimalModel]:
+    if row.animal.id in acc:
+        acc[row.animal.id].parameters.append(_parameter_from_row(row))
         return acc
-
-    acc[-1].parameters.append(_parameter_from_row(row))
+    acc[row.animal.id] = _animal_from_row(row)
     return acc
 
 
@@ -143,7 +142,7 @@ def _animal_from_row(row) -> AnimalModel:
     return AnimalModel(
         id=row.animal.id,
         name=row.animal.name,
-        parameters=[] if row.parameter.id is None else [_parameter_from_row(row)],
+        parameters=[] if row.parameter is None else [_parameter_from_row(row)],
         family=FamilyModel(
             id=row.family.id,
             name=row.family.name,
@@ -160,7 +159,7 @@ def _animal_from_row(row) -> AnimalModel:
 
 
 def _parameter_from_row(row) -> Parameter:
-    return Parameter(
+    return ParameterModel(
         id=row.parameter.id,
         key=row.parameter.key,
         value=row.parameter.value
