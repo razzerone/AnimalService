@@ -21,6 +21,9 @@ from entities.Family.service import FamilyService
 from entities.Order.dto import OrderDTO
 from entities.Order.model import Order
 from entities.Order.service import OrderService
+from entities.Parameter.dto import ParameterDTO
+from entities.Parameter.model import Parameter
+from entities.Parameter.service import ParameterService
 
 app = FastAPI(debug=config.DEBUG)
 
@@ -28,6 +31,7 @@ classService = ClassService()
 orderService = OrderService(classService)
 familyService = FamilyService(orderService)
 animalService = AnimalService(familyService)
+parameterService = ParameterService()
 
 if config.USE_OPEN_KEY_FILE:
     if config.DEBUG:
@@ -81,6 +85,34 @@ async def insert_animal(animal: AnimalDTO, session: AsyncSession = Depends(get_s
 @auth_delete('/animals/{animal_id}')
 async def delete_animal(animal_id: int, session: AsyncSession = Depends(get_session)):
     await animalService.delete(session, animal_id)
+    return JSONResponse({})
+
+
+@app.get('/animals/parameters')
+async def get_parameters(session: AsyncSession = Depends(get_session)) -> list[Parameter]:
+    res = await parameterService.get(session)
+    return res
+
+
+@app.get('/animals/parameters/{parameter_id}')
+async def get_parameter_by_id(parameter_id: int, session: AsyncSession = Depends(get_session)) -> Parameter:
+    res = await parameterService.get_by_id(session, parameter_id)
+    if res is None:
+        raise HTTPException(404, f'parameter with id={parameter_id} not found')
+    return res
+
+
+@auth_post('/animals/parameters')
+async def insert_parameter(parameter: ParameterDTO, session: AsyncSession = Depends(get_session)):
+    res = await parameterService.insert(session, parameter)
+    if res is None:
+        raise HTTPException(409, f'parameter already exists')
+    return res
+
+
+@auth_delete('/animals/parameters/{parameter_id}')
+async def delete_parameter(parameter_id: int, session: AsyncSession = Depends(get_session)):
+    await parameterService.delete(session, parameter_id)
     return JSONResponse({})
 
 
