@@ -33,3 +33,12 @@ class Animal(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     familyId = Column(Integer, ForeignKey('families.id'))
     name = Column(String(50), unique=True)
+
+
+class Parameter(Base):
+    __tablename__ = 'parameters'
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    animalId = Column(Integer, ForeignKey('animals.id'))
+    key = Column(String(50))
+    value = Column(String(50))
