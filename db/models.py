@@ -39,6 +39,6 @@ class Parameter(Base):
     __tablename__ = 'parameters'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
-    animalId = Column(Integer, ForeignKey('animals.id'))
+    animalId = Column(Integer, ForeignKey('animals.id', ondelete="CASCADE"))
     key = Column(String(50))
     value = Column(String(50))
