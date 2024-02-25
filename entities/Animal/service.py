@@ -114,7 +114,15 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                 session.commit()
             )
 
-            return AnimalModel(id=id_, name=item.name, family=family, parameters=[])
+            return AnimalModel(
+                id=id_,
+                name=item.name,
+                family=family,
+                parameters=[],
+                description=item.description,
+                environment_description=item.environment_description,
+                zoo_description=item.zoo_description
+            )
 
         except IntegrityError as ex:
             await session.rollback()
