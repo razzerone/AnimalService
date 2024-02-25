@@ -102,9 +102,9 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                 insert(Animal).values(
                     name=item.name,
                     familyId=item.family_id,
-                    description=item.description,
-                    environmentDescription=item.environment_description,
-                    zooDescription=item.zoo_description
+                    description="" if item.description is None else item.description,
+                    environmentDescription="" if item.environment_description is None else item.environment_description,
+                    zooDescription="" if item.zoo_description is None else item.zoo_description
                 )
             )).lastrowid
 
