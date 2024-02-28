@@ -3,7 +3,7 @@ from functools import reduce
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select, insert, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import aliased, joinedload
 
 from db.models import Class, Order, Animal, Family, Parameter
 from entities.Animal.dto import AnimalDTO
@@ -41,41 +41,69 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
         self._parameter_alias = aliased(Parameter, self._animals_subq, name="parameter")
 
     async def get(self, session: AsyncSession) -> list[AnimalModel]:
-        res = (await session.execute(
-            select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias)
-        )).all()
+        animals = (await session.execute(
+            select(Animal).options(joinedload(Animal.parameters))
+        )).scalars().unique().all()
 
-        return fold_animal_list_parameters(res)
+        # return fold_animal_list_parameters(res)
 
-        # return [AnimalModel(
-        #     id=row.animal.id,
-        #     name=row.animal.name,
-        #     family=FamilyModel(
-        #         id=row.family.id,
-        #         name=row.family.name,
-        #         order=OrderModel(
-        #             id=row.order.id,
-        #             name=row.order.name,
-        #             class_=ClassModel(
-        #                 id=row.class_.id,
-        #                 name=row.class_.name
-        #             )
-        #         )
-        #     )
-        # ) for row in res]
+        # res = (await session.execute(
+        #     select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias)
+        # )).all()
+        #
+        # return fold_animal_list_parameters(res)
+
+        return [AnimalModel(
+            id=animal.id,
+            name=animal.name,
+            description=animal.description,
+            environment_description=animal.environmentDescription,
+            zoo_description=animal.zooDescription,
+            parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
+            family=FamilyModel(
+                id=animal.family.id,
+                name=animal.family.name,
+                order=OrderModel(
+                    id=animal.family.order.id,
+                    name=animal.family.order.name,
+                    class_=ClassModel(
+                        id=animal.family.order.class_.id,
+                        name=animal.family.order.class_.name
+                    )
+                )
+            )
+        ) for animal in animals]
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> AnimalModel | None:
-        res = (await session.execute(
-            select(
-                self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias
-            )
-            .where(self._animal_alias.id == id_)
-        )).all()
+        animal = (await session.execute(
+            select(Animal).options(joinedload(Animal.parameters)).where(Animal.id == id_)
+        )).unique().scalar_one_or_none()
 
-        if len(res) == 0:
+        if animal is None:
             return None
 
-        return fold_animal_parameters(res)
+        return AnimalModel(
+            id=animal.id,
+            name=animal.name,
+            description=animal.description,
+            environment_description=animal.environmentDescription,
+            zoo_description=animal.zooDescription,
+            parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
+            family=FamilyModel(
+                id=animal.family.id,
+                name=animal.family.name,
+                order=OrderModel(
+                    id=animal.family.order.id,
+                    name=animal.family.order.name,
+                    class_=ClassModel(
+                        id=animal.family.order.class_.id,
+                        name=animal.family.order.class_.name
+                    )
+                )
+            )
+        )
+
+        # return fold_animal_parameters(res)
 
     # if row is None:
     #     return None

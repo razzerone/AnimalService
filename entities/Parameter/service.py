@@ -45,25 +45,25 @@ class ParameterService(Service[ParameterModel, ParameterDTO, int]):
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> ParameterModel | None:
         row = (await session.execute(
-            select(self._parameter_alias)
-            .where(self._parameter_alias.id == id_)
+            select(Parameter)
+            .where(Parameter.id == id_)
         )).first()
 
         return Parameter(
-            id=row.parameter.id,
-            key=row.parameter.key,
-            value=row.parameter.value
+            id=row.id,
+            key=row.key,
+            value=row.value
         )
 
     async def get(self, session: AsyncSession) -> list[ParameterModel]:
         res = (await session.execute(
-            select(self._parameter_alias)
-        )).all()
+            select(Parameter)
+        )).scalars().all()
 
         return [
             Parameter(
-                id=row.parameter.id,
-                key=row.parameter.key,
-                value=row.parameter.value
+                id=row.id,
+                key=row.key,
+                value=row.value
             )
             for row in res]

@@ -1,7 +1,7 @@
 from asyncio import current_task
 
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.asyncio import async_scoped_session
+from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from sqlalchemy.ext.asyncio import async_scoped_session, AsyncAttrs
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -14,7 +14,13 @@ DATABASE_URL = \
 if DEBUG:
     print(f'{DATABASE_URL=}')
 
-Base = declarative_base()
+# Base = declarative_base()
+
+
+class Base(AsyncAttrs, DeclarativeBase):
+    pass
+    # __allow_unmapped__ = True
+
 
 engine = create_async_engine(DATABASE_URL, echo=DEBUG)
 

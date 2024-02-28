@@ -1,47 +1,60 @@
+from typing import List
+
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import String
 from sqlalchemy import Integer
+from sqlalchemy.orm import relationship, Mapped, mapped_column, Relationship
+
 from db.base import Base
+from entities.model import Model
 
 
 class Class(Base):
     __tablename__ = 'classes'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    name = Column(String(50), unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True)
 
 
 class Order(Base):
     __tablename__ = 'orders'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    classId = Column(Integer, ForeignKey('classes.id'))
-    name = Column(String(50), unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    classId: Mapped[int] = mapped_column(ForeignKey('classes.id'))
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+
+    class_: Mapped['Class'] = relationship('Class', lazy='joined')
 
 
 class Family(Base):
     __tablename__ = 'families'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    orderId = Column(Integer, ForeignKey('orders.id'))
-    name = Column(String(50), unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    orderId: Mapped[int] = mapped_column(ForeignKey('orders.id'))
+    name: Mapped[str] = mapped_column(String(50), unique=True)
 
-
-class Animal(Base):
-    __tablename__ = 'animals'
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    familyId = Column(Integer, ForeignKey('families.id'))
-    name = Column(String(50), unique=True)
-    description = Column(String(512), default="")
-    environmentDescription = Column(String(512), default="")
-    zooDescription = Column(String(512), default="")
+    order: Mapped['Order'] = relationship('Order', lazy='joined')
 
 
 class Parameter(Base):
     __tablename__ = 'parameters'
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    animalId = Column(Integer, ForeignKey('animals.id', ondelete="CASCADE"))
-    key = Column(String(50))
-    value = Column(String(50))
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    animalId: Mapped[int] = mapped_column(ForeignKey('animals.id', ondelete='CASCADE'))
+    key: Mapped[str] = mapped_column(String(50))
+    value: Mapped[str] = mapped_column(String(50))
+
+
+class Animal(Base):
+    __tablename__ = 'animals'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    familyId: Mapped[int] = mapped_column(ForeignKey('families.id'))
+    name: Mapped[str] = mapped_column(String(50), unique=True)
+    description: Mapped[str] = mapped_column(String(1024), default='')
+    environmentDescription: Mapped[str] = mapped_column(String(1024), default='')
+    zooDescription: Mapped[str] = mapped_column(String(1024), default='')
+
+    family: Mapped['Family'] = relationship('Family', lazy='joined')
+    parameters: Mapped[List['Parameter']] = relationship(lazy='joined')
+

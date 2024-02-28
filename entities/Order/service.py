@@ -25,32 +25,32 @@ class OrderService(Service[OrderModel, OrderDTO, int]):
         self._class_alias = aliased(Class, self._orders_subq, name="class_")
 
     async def get(self, session: AsyncSession) -> list[OrderModel]:
-        res = (await session.execute(
-            select(self._order_alias, self._class_alias)
-        ))
+        orders = (await session.execute(
+            select(Order)
+        )).scalars().all()
 
         return [OrderModel(
-            id=row.order.id,
-            name=row.order.name,
+            id=order.id,
+            name=order.name,
             class_=ClassModel(
-                id=row.class_.id,
-                name=row.class_.name
+                id=order.class_.id,
+                name=order.class_.name
             )
-        ) for row in res]
+        ) for order in orders]
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> OrderModel | None:
-        row = (await session.execute(
-            select(self._order_alias, self._class_alias).where(self._order_alias.id == id_)
-        )).first()
+        order = (await session.execute(
+            select(Order).where(Order.id == id_)
+        )).scalar_one_or_none()
 
-        if row is None:
+        if order is None:
             return None
         return OrderModel(
-            id=row.order.id,
-            name=row.order.name,
+            id=order.id,
+            name=order.name,
             class_=ClassModel(
-                id=row.class_.id,
-                name=row.class_.name
+                id=order.class_.id,
+                name=order.class_.name
             )
         )
 

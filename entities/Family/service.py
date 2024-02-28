@@ -50,39 +50,39 @@ class FamilyService(Service[FamilyModel, FamilyDTO, int]):
             return None
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> FamilyModel | None:
-        row = (await session.execute(
-            select(self._family_alias, self._order_alias, self._class_alias).where(self._family_alias.id == id_)
-        )).first()
+        family = (await session.execute(
+            select(Family).where(Family.id == id_)
+        )).scalar_one_or_none()
 
-        if row is None:
+        if family is None:
             return None
         return FamilyModel(
-            id=row.family.id,
-            name=row.family.name,
+            id=family.id,
+            name=family.name,
             order=OrderModel(
-                id=row.order.id,
-                name=row.order.name,
+                id=family.order.id,
+                name=family.order.name,
                 class_=ClassModel(
-                    id=row.class_.id,
-                    name=row.class_.name
+                    id=family.order.class_.id,
+                    name=family.order.class_.name
                 )
             )
         )
 
     async def get(self, session: AsyncSession) -> list[FamilyModel]:
-        res = (await session.execute(
-            select(self._family_alias, self._order_alias, self._class_alias)
-        ))
+        families = (await session.execute(
+            select(Family)
+        )).scalars().all()
 
         return [FamilyModel(
-            id=row.family.id,
-            name=row.family.name,
+            id=family.id,
+            name=family.name,
             order=OrderModel(
-                id=row.order.id,
-                name=row.order.name,
+                id=family.order.id,
+                name=family.order.name,
                 class_=ClassModel(
-                    id=row.class_.id,
-                    name=row.class_.name
+                    id=family.order.class_.id,
+                    name=family.order.class_.name
                 )
             )
-        ) for row in res]
+        ) for family in families]
