@@ -46,6 +46,14 @@ class Parameter(Base):
     value: Mapped[str] = mapped_column(String(50))
 
 
+class Image(Base):
+    __tablename__ = 'images'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    animalId: Mapped[int] = mapped_column(ForeignKey('animals.id', ondelete='CASCADE'))
+    url: Mapped[str] = mapped_column(String(2083), default='')
+
+
 class Animal(Base):
     __tablename__ = 'animals'
 
@@ -57,7 +65,12 @@ class Animal(Base):
     zooDescription: Mapped[str] = mapped_column(String(1024), default='')
     latitude: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=10))
     longitude: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=10))
+    qr_url: Mapped[str] = mapped_column(String(2083), default='')
+    map_icon_url: Mapped[str] = mapped_column(String(2083), default='')
+    list_icon_url: Mapped[str] = mapped_column(String(2083), default='')
+    audio_url: Mapped[str] = mapped_column(String(2083), default='')
 
     family: Mapped['Family'] = relationship('Family', lazy='joined')
     parameters: Mapped[List['Parameter']] = relationship(lazy='joined')
+    images: Mapped[List['Image']] = relationship(lazy='joined')
 
