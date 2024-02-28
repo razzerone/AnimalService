@@ -1,6 +1,7 @@
-from typing import List
+from decimal import Decimal
+from typing import List, Optional
 
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, DECIMAL
 from sqlalchemy import String
 from sqlalchemy import Integer
 from sqlalchemy.orm import relationship, Mapped, mapped_column, Relationship
@@ -54,6 +55,8 @@ class Animal(Base):
     description: Mapped[str] = mapped_column(String(1024), default='')
     environmentDescription: Mapped[str] = mapped_column(String(1024), default='')
     zooDescription: Mapped[str] = mapped_column(String(1024), default='')
+    latitude: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=10))
+    longitude: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=10))
 
     family: Mapped['Family'] = relationship('Family', lazy='joined')
     parameters: Mapped[List['Parameter']] = relationship(lazy='joined')

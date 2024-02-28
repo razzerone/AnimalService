@@ -1,3 +1,6 @@
+from decimal import Decimal
+from typing import Optional
+
 from pydantic import Field
 
 from entities.Family.model import Family
@@ -13,3 +16,4 @@ class Animal(Model):
     description: str = Field(max_length=512)
     environment_description: str = Field(max_length=512)
     zoo_description: str = Field(max_length=512)
+    geolocation: tuple[Decimal, Decimal]

@@ -60,6 +60,7 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
             environment_description=animal.environmentDescription,
             zoo_description=animal.zooDescription,
             parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
+            geolocation=(animal.latitude, animal.longitude),
             family=FamilyModel(
                 id=animal.family.id,
                 name=animal.family.name,
@@ -89,6 +90,7 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
             environment_description=animal.environmentDescription,
             zoo_description=animal.zooDescription,
             parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
+            geolocation=(animal.latitude, animal.longitude),
             family=FamilyModel(
                 id=animal.family.id,
                 name=animal.family.name,
@@ -132,7 +134,9 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                     familyId=item.family_id,
                     description="" if item.description is None else item.description,
                     environmentDescription="" if item.environment_description is None else item.environment_description,
-                    zooDescription="" if item.zoo_description is None else item.zoo_description
+                    zooDescription="" if item.zoo_description is None else item.zoo_description,
+                    latitude=item.geolocation[0],
+                    longitude=item.geolocation[0]
                 )
             )).lastrowid
 
@@ -149,7 +153,8 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                 parameters=[],
                 description=item.description,
                 environment_description=item.environment_description,
-                zoo_description=item.zoo_description
+                zoo_description=item.zoo_description,
+                geolocation=item.geolocation
             )
 
         except IntegrityError as ex:
