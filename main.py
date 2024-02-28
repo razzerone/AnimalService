@@ -18,6 +18,9 @@ from entities.Class.service import ClassService
 from entities.Family.dto import FamilyDTO
 from entities.Family.model import Family
 from entities.Family.service import FamilyService
+from entities.Image.dto import ImageDTO
+from entities.Image.model import Image
+from entities.Image.service import ImageService
 from entities.Order.dto import OrderDTO
 from entities.Order.model import Order
 from entities.Order.service import OrderService
@@ -32,6 +35,7 @@ orderService = OrderService(classService)
 familyService = FamilyService(orderService)
 animalService = AnimalService(familyService)
 parameterService = ParameterService()
+imageService = ImageService()
 
 if config.USE_OPEN_KEY_FILE:
     if config.DEBUG:
@@ -85,6 +89,34 @@ async def insert_parameter(parameter: ParameterDTO, session: AsyncSession = Depe
 @auth_delete('/animals/parameters/{parameter_id}')
 async def delete_parameter(parameter_id: int, session: AsyncSession = Depends(get_session)):
     await parameterService.delete(session, parameter_id)
+    return JSONResponse({})
+
+
+@app.get('/animals/images')
+async def get_images(session: AsyncSession = Depends(get_session)) -> list[Image]:
+    res = await imageService.get(session)
+    return res
+
+
+@app.get('/animals/images/{image_id}')
+async def get_image_by_id(image_id: int, session: AsyncSession = Depends(get_session)) -> Image:
+    res = await imageService.get_by_id(session, image_id)
+    if res is None:
+        raise HTTPException(404, f'image with id={image_id} not found')
+    return res
+
+
+@auth_post('/animals/images')
+async def insert_image(image: ImageDTO, session: AsyncSession = Depends(get_session)):
+    res = await imageService.insert(session, image)
+    if res is None:
+        raise HTTPException(409, f'image already exists')
+    return res
+
+
+@auth_delete('/animals/images/{image_id}')
+async def delete_image(image_id: int, session: AsyncSession = Depends(get_session)):
+    await imageService.delete(session, image_id)
     return JSONResponse({})
 
 
