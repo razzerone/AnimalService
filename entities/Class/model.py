@@ -5,4 +5,4 @@ from entities.model import Model
 
 class Class(Model):
     id: int
-    name: str = Field(max_length=50)
+    name: str = Field(max_length=100)

@@ -14,7 +14,7 @@ class Class(Base):
     __tablename__ = 'classes'
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
 
 
 class Order(Base):
@@ -22,7 +22,7 @@ class Order(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     classId: Mapped[int] = mapped_column(ForeignKey('classes.id'))
-    name: Mapped[str] = mapped_column(String(50), unique=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
 
     class_: Mapped['Class'] = relationship('Class', lazy='joined')
 
@@ -32,7 +32,7 @@ class Family(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     orderId: Mapped[int] = mapped_column(ForeignKey('orders.id'))
-    name: Mapped[str] = mapped_column(String(50), unique=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
 
     order: Mapped['Order'] = relationship('Order', lazy='joined')
 
@@ -42,8 +42,8 @@ class Parameter(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     animalId: Mapped[int] = mapped_column(ForeignKey('animals.id', ondelete='CASCADE'))
-    key: Mapped[str] = mapped_column(String(50))
-    value: Mapped[str] = mapped_column(String(50))
+    key: Mapped[str] = mapped_column(String(100))
+    value: Mapped[str] = mapped_column(String(100))
 
 
 class Image(Base):
@@ -59,7 +59,7 @@ class Animal(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     familyId: Mapped[int] = mapped_column(ForeignKey('families.id'))
-    name: Mapped[str] = mapped_column(String(50), unique=True)
+    name: Mapped[str] = mapped_column(String(100), unique=True)
     description: Mapped[str] = mapped_column(String(1024), default='')
     environmentDescription: Mapped[str] = mapped_column(String(1024), default='')
     zooDescription: Mapped[str] = mapped_column(String(1024), default='')

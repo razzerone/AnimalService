@@ -6,5 +6,5 @@ from entities.model import Model
 
 class Order(Model):
     id: int
-    name: str = Field(max_length=50)
+    name: str = Field(max_length=100)
     class_: Class

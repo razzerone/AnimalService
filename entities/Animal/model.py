@@ -11,12 +11,12 @@ from entities.model import Model
 
 class Animal(Model):
     id: int
-    name: str = Field(max_length=50)
+    name: str = Field(max_length=100)
     family: Family
     parameters: list[Parameter]
-    description: str = Field(max_length=512)
-    environment_description: str = Field(max_length=512)
-    zoo_description: str = Field(max_length=512)
+    description: str = Field(max_length=1024)
+    environment_description: str = Field(max_length=1024)
+    zoo_description: str = Field(max_length=1024)
     geolocation: tuple[Decimal, Decimal]
     qr_url: HttpUrl
     map_icon_url: HttpUrl

@@ -7,11 +7,11 @@ from entities.dto import DTO
 
 
 class AnimalDTO(DTO):
-    name: str = Field(max_length=50)
+    name: str = Field(max_length=100)
     family_id: int
-    description: Optional[str] = Field(max_length=512)
-    environment_description: Optional[str] = Field(max_length=512)
-    zoo_description: Optional[str] = Field(max_length=512)
+    description: Optional[str] = Field(max_length=1024)
+    environment_description: Optional[str] = Field(max_length=1024)
+    zoo_description: Optional[str] = Field(max_length=1024)
     geolocation: tuple[Decimal, Decimal]
     qr_url: HttpUrl
     map_icon_url: HttpUrl
