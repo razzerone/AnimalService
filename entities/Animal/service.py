@@ -11,6 +11,7 @@ from entities.Animal.model import Animal as AnimalModel
 from entities.Class.dto import ClassDTO
 from entities.Family.service import FamilyService
 from entities.Family.model import Family as FamilyModel
+from entities.Image.model import Image as ImageModel
 from entities.Order.model import Order as OrderModel
 from entities.Class.model import Class as ClassModel
 from entities.Parameter.model import Parameter as ParameterModel
@@ -42,38 +43,10 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
 
     async def get(self, session: AsyncSession) -> list[AnimalModel]:
         animals = (await session.execute(
-            select(Animal).options(joinedload(Animal.parameters))
+            select(Animal).options(joinedload(Animal.parameters)).options(joinedload(Animal.images))
         )).scalars().unique().all()
 
-        # return fold_animal_list_parameters(res)
-
-        # res = (await session.execute(
-        #     select(self._animal_alias, self._family_alias, self._order_alias, self._class_alias, self._parameter_alias)
-        # )).all()
-        #
-        # return fold_animal_list_parameters(res)
-
-        return [AnimalModel(
-            id=animal.id,
-            name=animal.name,
-            description=animal.description,
-            environment_description=animal.environmentDescription,
-            zoo_description=animal.zooDescription,
-            parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
-            geolocation=(animal.latitude, animal.longitude),
-            family=FamilyModel(
-                id=animal.family.id,
-                name=animal.family.name,
-                order=OrderModel(
-                    id=animal.family.order.id,
-                    name=animal.family.order.name,
-                    class_=ClassModel(
-                        id=animal.family.order.class_.id,
-                        name=animal.family.order.class_.name
-                    )
-                )
-            )
-        ) for animal in animals]
+        return [animal_from_db(animal) for animal in animals]
 
     async def get_by_id(self, session: AsyncSession, id_: int) -> AnimalModel | None:
         animal = (await session.execute(
@@ -83,48 +56,7 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
         if animal is None:
             return None
 
-        return AnimalModel(
-            id=animal.id,
-            name=animal.name,
-            description=animal.description,
-            environment_description=animal.environmentDescription,
-            zoo_description=animal.zooDescription,
-            parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
-            geolocation=(animal.latitude, animal.longitude),
-            family=FamilyModel(
-                id=animal.family.id,
-                name=animal.family.name,
-                order=OrderModel(
-                    id=animal.family.order.id,
-                    name=animal.family.order.name,
-                    class_=ClassModel(
-                        id=animal.family.order.class_.id,
-                        name=animal.family.order.class_.name
-                    )
-                )
-            )
-        )
-
-        # return fold_animal_parameters(res)
-
-    # if row is None:
-    #     return None
-    # return AnimalModel(
-    #     id=row.animal.id,
-    #     name=row.animal.name,
-    #     family=FamilyModel(
-    #         id=row.family.id,
-    #         name=row.family.name,
-    #         order=OrderModel(
-    #             id=row.order.id,
-    #             name=row.order.name,
-    #             class_=ClassModel(
-    #                 id=row.class_.id,
-    #                 name=row.class_.name
-    #             )
-    #         )
-    #     )
-    # )
+        return animal_from_db(animal)
 
     async def insert(self, session: AsyncSession, item: AnimalDTO):
         try:
@@ -136,7 +68,11 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                     environmentDescription="" if item.environment_description is None else item.environment_description,
                     zooDescription="" if item.zoo_description is None else item.zoo_description,
                     latitude=item.geolocation[0],
-                    longitude=item.geolocation[0]
+                    longitude=item.geolocation[0],
+                    qr_url=item.qr_url,
+                    map_icon_url=item.map_icon_url,
+                    list_icon_url=item.list_icon_url,
+                    audio_url=item.audio_url,
                 )
             )).lastrowid
 
@@ -154,7 +90,12 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
                 description=item.description,
                 environment_description=item.environment_description,
                 zoo_description=item.zoo_description,
-                geolocation=item.geolocation
+                geolocation=item.geolocation,
+                qr_url=item.qr_url,
+                map_icon_url=item.map_icon_url,
+                list_icon_url=item.list_icon_url,
+                audio_url=item.audio_url,
+                images=[]
             )
 
         except IntegrityError as ex:
@@ -162,57 +103,39 @@ class AnimalService(Service[ClassModel, ClassDTO, int]):
             return None
 
     async def delete(self, session: AsyncSession, id_: int) -> None:
-        (await session.execute(delete(Animal).where(Animal.id == id_)))
+        await session.execute(delete(Animal).where(Animal.id == id_))
         await session.commit()
 
 
-def fold_animal_parameters(rows) -> AnimalModel:
-    animal = _animal_from_row(rows[0])
-    for row in rows[1:]:
-        animal.parameters.append(_parameter_from_row(row))
-
-    return animal
-
-
-def fold_animal_list_parameters(rows) -> list[AnimalModel]:
-    return list(reduce(_product_animal_list, rows, {}).values())
-
-
-def _product_animal_list(acc: dict[int, AnimalModel], row) -> dict[int, AnimalModel]:
-    if row.animal.id in acc:
-        acc[row.animal.id].parameters.append(_parameter_from_row(row))
-        return acc
-    acc[row.animal.id] = _animal_from_row(row)
-    return acc
-
-
-def _animal_from_row(row) -> AnimalModel:
+def animal_from_db(animal: Animal) -> AnimalModel:
     return AnimalModel(
-        id=row.animal.id,
-        name=row.animal.name,
-        parameters=[] if row.parameter is None else [_parameter_from_row(row)],
+        id=animal.id,
+        name=animal.name,
+        description=animal.description,
+        environment_description=animal.environmentDescription,
+        zoo_description=animal.zooDescription,
+        parameters=[ParameterModel(id=p.id, key=p.key, value=p.value) for p in animal.parameters],
+        geolocation=(animal.latitude, animal.longitude),
+        qr_url=animal.qr_url,
+        map_icon_url=animal.map_icon_url,
+        list_icon_url=animal.list_icon_url,
+        audio_url=animal.audio_url,
+        images=[
+            ImageModel(
+                id=i.id,
+                url=i.url
+            )
+            for i in animal.images],
         family=FamilyModel(
-            id=row.family.id,
-            name=row.family.name,
+            id=animal.family.id,
+            name=animal.family.name,
             order=OrderModel(
-                id=row.order.id,
-                name=row.order.name,
+                id=animal.family.order.id,
+                name=animal.family.order.name,
                 class_=ClassModel(
-                    id=row.class_.id,
-                    name=row.class_.name
+                    id=animal.family.order.class_.id,
+                    name=animal.family.order.class_.name
                 )
             )
-        ),
-        description=row.animal.description,
-        environment_description=row.animal.environmentDescription,
-        zoo_description=row.animal.zooDescription
-
-    )
-
-
-def _parameter_from_row(row) -> Parameter:
-    return ParameterModel(
-        id=row.parameter.id,
-        key=row.parameter.key,
-        value=row.parameter.value
+        )
     )

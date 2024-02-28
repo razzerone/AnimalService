@@ -1,7 +1,7 @@
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import Field
+from pydantic import Field, HttpUrl
 
 from entities.dto import DTO
 
@@ -13,3 +13,7 @@ class AnimalDTO(DTO):
     environment_description: Optional[str] = Field(max_length=512)
     zoo_description: Optional[str] = Field(max_length=512)
     geolocation: tuple[Decimal, Decimal]
+    qr_url: HttpUrl
+    map_icon_url: HttpUrl
+    list_icon_url: HttpUrl
+    audio_url: HttpUrl
